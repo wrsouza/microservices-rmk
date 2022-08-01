@@ -14,9 +14,13 @@ export class ProductsController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @MessagePattern({ cmd: 'add-product' })
-  async addProduct(@Payload() productDto: string) {
+  async addProduct(@Payload() productDto: string, @Ctx() context: RmqContext) {
     Logger.log(`Payload: ${productDto}`);
     const command = new CreateProductCommand(JSON.parse(productDto));
     await this.commandBus.execute(command);
+
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    channel.ack(originalMsg);
   }
 }
